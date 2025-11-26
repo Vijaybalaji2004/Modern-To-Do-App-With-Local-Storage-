@@ -1,0 +1,762 @@
+<!-- project 1
+
+Modern To-Do App (With Local Storage)
+
+
+==================================== -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Modern To-Do App</title>
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --muted:#97a0b3;
+      --accent:#7c5cff;
+      --accent-2:#00d4ff;
+      --success:#28c76f;
+      --danger:#ff6b6b;
+      --glass: rgba(255,255,255,0.03);
+      --radius:12px;
+      --mono: 'Segoe UI', Roboto, Arial, Helvetica, sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--mono);
+      background:linear-gradient(180deg,#071022 0%, #071a2a 100%);
+      color:#e6eef8;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+      -webkit-font-smoothing:antialiased;
+    }
+
+    /* App container */
+    .app{
+      width:100%;
+      max-width:980px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:18px;
+      padding:28px;
+      box-shadow: 0 10px 30px rgba(3,6,12,0.6);
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:20px;
+    }
+    .brand{
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .logo{
+      width:52px;
+      height:52px;
+      border-radius:10px;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      color:white;
+      box-shadow:0 6px 20px rgba(124,92,255,0.18);
+    }
+    h1{font-size:20px;margin:0}
+    p.sub{margin:0;color:var(--muted);font-size:13px}
+
+    .controls{
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .btn{
+      background:var(--glass);
+      border:1px solid rgba(255,255,255,0.04);
+      color:var(--accent-2);
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+    }
+    .btn.primary{
+      background: linear-gradient(90deg,var(--accent),var(--accent-2));
+      color:#071022;
+      border:none;
+      box-shadow:0 8px 30px rgba(124,92,255,0.12);
+    }
+    .search{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      background:rgba(255,255,255,0.02);
+      padding:8px 12px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.02);
+      min-width:260px;
+    }
+    .search input{
+      background:transparent;
+      border:0;
+      outline:none;
+      color:inherit;
+      width:100%;
+      font-size:14px;
+    }
+
+    /* main area */
+    .main{
+      display:grid;
+      grid-template-columns: 1fr 320px;
+      gap:20px;
+    }
+    @media (max-width:880px){
+      .main{grid-template-columns:1fr}
+    }
+
+    /* todo panel */
+    .panel{
+      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.015));
+      padding:18px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.02);
+    }
+
+    .toolbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .filters{
+      display:flex;
+      gap:8px;
+    }
+    .chip{
+      padding:8px 10px;
+      border-radius:999px;
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.02);
+      color:var(--muted);
+      font-weight:600;
+      cursor:pointer;
+    }
+    .chip.active{
+      background:linear-gradient(90deg,var(--accent),var(--accent-2));
+      color:#071022;
+      border:none;
+      box-shadow:0 6px 18px rgba(124,92,255,0.08);
+    }
+
+    ul.todo-list{
+      list-style:none;
+      margin:0;
+      padding:0;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    li.todo{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:12px;
+      background:rgba(255,255,255,0.01);
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.02);
+      transition:transform .12s ease, box-shadow .12s ease;
+    }
+    li.todo:hover{transform:translateY(-4px); box-shadow:0 12px 30px rgba(2,6,23,0.5)}
+    .todo .left{
+      flex:1;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .checkbox{
+      width:20px;
+      height:20px;
+      border-radius:6px;
+      border:1px solid rgba(255,255,255,0.06);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      background:transparent;
+    }
+    .checkbox.checked{
+      background:linear-gradient(90deg,var(--accent),var(--accent-2));
+      color:#071022;
+      border:none;
+      box-shadow:0 8px 18px rgba(124,92,255,0.06);
+    }
+    .task-title{
+      font-weight:700;
+    }
+    .task-meta{
+      font-size:12px;color:var(--muted)
+    }
+
+    .actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .icon-btn{
+      background:transparent;
+      border:0;
+      color:var(--muted);
+      cursor:pointer;
+      padding:8px;
+      border-radius:8px;
+    }
+    .icon-btn:hover{background:rgba(255,255,255,0.02); color:var(--accent-2)}
+
+    /* sidebar */
+    .sidebar{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .stat{
+      background:rgba(255,255,255,0.02);
+      padding:12px;
+      border-radius:12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .small{font-size:13px;color:var(--muted)}
+
+    /* empty */
+    .empty{
+      text-align:center;
+      color:var(--muted);
+      padding:28px 12px;
+      font-size:14px;
+    }
+
+    /* modal backdrop & modal */
+    .backdrop{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:rgba(3,6,12,0.6);
+      z-index:60;
+    }
+    .backdrop.active{display:flex}
+    .modal{
+      width:100%;
+      max-width:560px;
+      background:linear-gradient(180deg,#071029,#071422);
+      border-radius:14px;
+      padding:18px;
+      border:1px solid rgba(255,255,255,0.03);
+      box-shadow:0 20px 60px rgba(3,6,12,0.7);
+    }
+    .modal h2{margin:0 0 6px 0}
+    .modal .row{display:flex;gap:10px;margin-top:12px}
+    .modal label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    .modal input[type="text"], .modal textarea, .modal select{
+      width:100%;
+      padding:10px 12px;
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.03);
+      color:inherit;
+      border-radius:10px;
+      outline:none;
+      font-size:14px;
+    }
+    .modal textarea{min-height:80px;resize:vertical}
+    .modal .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+    .muted{color:var(--muted);font-size:13px}
+
+    /* small helpers */
+    .badge{
+      font-size:12px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.02);
+      color:var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div class="brand">
+        <div class="logo">TD</div>
+        <div>
+          <h1>Modern To-Do</h1>
+          <p class="sub">Clean tasks, smartly organized</p>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="search" aria-hidden="false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="2" /></svg>
+          <input id="search" placeholder="Search tasks..." aria-label="Search tasks">
+        </div>
+        <button class="btn" id="clearAllBtn" title="Clear all completed">Clear Completed</button>
+        <button class="btn primary" id="openAddBtn">+ Add Task</button>
+      </div>
+    </header>
+
+    <section class="main">
+      <div class="panel" aria-labelledby="todo-heading">
+        <div class="toolbar">
+          <div>
+            <span class="small">Tasks</span>
+            <span class="badge" id="countBadge">0</span>
+          </div>
+
+          <div class="filters" role="tablist" aria-label="Task filters">
+            <button class="chip active" data-filter="all">All</button>
+            <button class="chip" data-filter="active">Active</button>
+            <button class="chip" data-filter="completed">Completed</button>
+          </div>
+        </div>
+
+        <h2 id="todo-heading" style="font-size:16px;margin:0 0 10px 0">Your Tasks</h2>
+
+        <ul class="todo-list" id="todoList" aria-live="polite"></ul>
+
+        <div id="emptyState" class="empty" hidden>
+          No tasks yet. Click <strong>Add Task</strong> to create one.
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <div class="stat">
+          <div>
+            <div class="small">Total Tasks</div>
+            <div style="font-weight:800;font-size:18px" id="totalTasks">0</div>
+          </div>
+          <div class="badge" id="pendingTasks">0 pending</div>
+        </div>
+
+        <div class="stat">
+          <div>
+            <div class="small">Completed</div>
+            <div style="font-weight:800;font-size:18px" id="completedTasks">0</div>
+          </div>
+          <div class="badge">Good job</div>
+        </div>
+
+        <div class="stat">
+          <div>
+            <div class="small">Important</div>
+            <div style="font-weight:800;font-size:18px" id="importantCount">0</div>
+          </div>
+          <div class="badge">Starred</div>
+        </div>
+
+        <div class="panel" style="padding:12px">
+          <div class="muted">Tips</div>
+          <ul style="margin:8px 0 0 16px;color:var(--muted);line-height:1.6;padding:0">
+            <li>Use the modal to add/edit tasks</li>
+            <li>Mark complete to save progress</li>
+            <li>Tasks persist in localStorage</li>
+          </ul>
+        </div>
+      </aside>
+    </section>
+  </div>
+
+  <!-- Modal -->
+  <div class="backdrop" id="modalBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h2 id="modalTitle">Add Task</h2>
+      <p class="muted" id="modalSub">Add a new task to your list.</p>
+
+      <div style="margin-top:12px">
+        <label for="taskTitle">Title</label>
+        <input id="taskTitle" type="text" placeholder="Task title" />
+      </div>
+
+      <div style="margin-top:12px">
+        <label for="taskDesc">Description (optional)</label>
+        <textarea id="taskDesc" placeholder="Details about the task..."></textarea>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <div style="flex:1">
+          <label for="taskPriority">Priority</label>
+          <select id="taskPriority" aria-label="Select priority">
+            <option value="low">Low</option>
+            <option value="normal" selected>Normal</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+
+        <div style="width:160px">
+          <label for="taskDue">Due (optional)</label>
+          <input id="taskDue" type="text" placeholder="e.g. 2025-12-31" />
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn" id="cancelBtn">Cancel</button>
+        <button class="btn primary" id="saveBtn">Save Task</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* Modern To-Do App JS
+       Features:
+         - Add / Edit / Delete tasks
+         - Mark complete
+         - Star important
+         - Filters (all/active/completed)
+         - Search
+         - localStorage persistence
+         - Accessible modal (Esc to close, focus management)
+    */
+
+    (function(){
+      // Selectors
+      const todoListEl = document.getElementById('todoList');
+      const emptyStateEl = document.getElementById('emptyState');
+      const countBadge = document.getElementById('countBadge');
+      const totalTasksEl = document.getElementById('totalTasks');
+      const pendingTasksEl = document.getElementById('pendingTasks');
+      const completedTasksEl = document.getElementById('completedTasks');
+      const importantCountEl = document.getElementById('importantCount');
+
+      const openAddBtn = document.getElementById('openAddBtn');
+      const modalBackdrop = document.getElementById('modalBackdrop');
+      const taskTitleInput = document.getElementById('taskTitle');
+      const taskDescInput = document.getElementById('taskDesc');
+      const taskPriorityEl = document.getElementById('taskPriority');
+      const taskDueEl = document.getElementById('taskDue');
+      const saveBtn = document.getElementById('saveBtn');
+      const cancelBtn = document.getElementById('cancelBtn');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalSub = document.getElementById('modalSub');
+
+      const filterBtns = document.querySelectorAll('.chip');
+      const searchInput = document.getElementById('search');
+      const clearAllBtn = document.getElementById('clearAllBtn');
+
+      // App state
+      let tasks = []; // each task: {id, title, desc, createdAt, due, priority, completed, important}
+      let editingId = null;
+      let filter = 'all';
+      let searchTerm = '';
+
+      // LocalStorage key
+      const LS_KEY = 'modern_todo_v1';
+
+      // Init
+      function init(){
+        load();
+        bindEvents();
+        render();
+      }
+
+      // load from localStorage
+      function load(){
+        try {
+          const raw = localStorage.getItem(LS_KEY);
+          tasks = raw ? JSON.parse(raw) : [];
+        } catch(e){
+          tasks = [];
+        }
+      }
+
+      // save to localStorage
+      function persist(){
+        localStorage.setItem(LS_KEY, JSON.stringify(tasks));
+      }
+
+      // create task object
+      function createTask({title, desc, priority='normal', due='' }){
+        return {
+          id: 't_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+          title: title.trim(),
+          desc: desc.trim(),
+          createdAt: new Date().toISOString(),
+          due: due.trim(),
+          priority,
+          completed: false,
+          important: false
+        };
+      }
+
+      // render list
+      function render(){
+        // apply filter & search
+        const visible = tasks.filter(t => {
+          if (filter === 'active' && t.completed) return false;
+          if (filter === 'completed' && !t.completed) return false;
+          if (searchTerm){
+            const s = searchTerm.toLowerCase();
+            return t.title.toLowerCase().includes(s) || t.desc.toLowerCase().includes(s);
+          }
+          return true;
+        });
+
+        todoListEl.innerHTML = '';
+        if (visible.length === 0){
+          emptyStateEl.hidden = false;
+        } else {
+          emptyStateEl.hidden = true;
+        }
+
+        visible.forEach(task => {
+          const li = document.createElement('li');
+          li.className = 'todo';
+          li.dataset.id = task.id;
+
+          const left = document.createElement('div');
+          left.className = 'left';
+
+          const chk = document.createElement('div');
+          chk.className = 'checkbox' + (task.completed ? ' checked' : '');
+          chk.setAttribute('role','button');
+          chk.setAttribute('aria-pressed', String(task.completed));
+          chk.title = task.completed ? 'Mark as active' : 'Mark as complete';
+          chk.innerHTML = task.completed ? '✔' : '';
+
+          const meta = document.createElement('div');
+          meta.style.minWidth = '0';
+
+          const title = document.createElement('div');
+          title.className = 'task-title';
+          title.textContent = task.title;
+          if (task.completed) title.style.textDecoration = 'line-through';
+
+          const sub = document.createElement('div');
+          sub.className = 'task-meta';
+          const created = new Date(task.createdAt).toLocaleString();
+          let metaText = created;
+          if (task.due) metaText += ' • due ' + task.due;
+          if (task.priority && task.priority !== 'normal') metaText += ' • ' + task.priority;
+          sub.textContent = metaText;
+
+          meta.appendChild(title);
+          meta.appendChild(sub);
+
+          left.appendChild(chk);
+          left.appendChild(meta);
+
+          const actions = document.createElement('div');
+          actions.className = 'actions';
+
+          const starBtn = document.createElement('button');
+          starBtn.className = 'icon-btn';
+          starBtn.title = task.important ? 'Unstar task' : 'Mark as important';
+          starBtn.innerHTML = task.important ? '★' : '☆';
+
+          const editBtn = document.createElement('button');
+          editBtn.className = 'icon-btn';
+          editBtn.title = 'Edit task';
+          editBtn.innerHTML = '✎';
+
+          const delBtn = document.createElement('button');
+          delBtn.className = 'icon-btn';
+          delBtn.title = 'Delete task';
+          delBtn.innerHTML = '🗑';
+
+          actions.appendChild(starBtn);
+          actions.appendChild(editBtn);
+          actions.appendChild(delBtn);
+
+          li.appendChild(left);
+          li.appendChild(actions);
+
+          // Attach to list
+          todoListEl.appendChild(li);
+
+          // Event binding via delegation handled below
+        });
+
+        // stats
+        const total = tasks.length;
+        const completed = tasks.filter(t => t.completed).length;
+        const pending = total - completed;
+        const important = tasks.filter(t => t.important).length;
+
+        countBadge.textContent = visible.length;
+        totalTasksEl.textContent = total;
+        pendingTasksEl.textContent = pending + ' pending';
+        completedTasksEl.textContent = completed;
+        importantCountEl.textContent = important;
+      }
+
+      // find task index
+      function findIndexById(id){
+        return tasks.findIndex(t => t.id === id);
+      }
+
+      // events
+      function bindEvents(){
+        // open modal to add
+        openAddBtn.addEventListener('click', () => openModal('add'));
+
+        // cancel
+        cancelBtn.addEventListener('click', closeModal);
+
+        // save
+        saveBtn.addEventListener('click', onSave);
+
+        // backdrop click to close (but not if clicking modal)
+        modalBackdrop.addEventListener('click', (e) => {
+          if (e.target === modalBackdrop) closeModal();
+        });
+
+        // keyboard accessibility
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            if (modalBackdrop.classList.contains('active')) closeModal();
+          }
+        });
+
+        // list actions via event delegation
+        todoListEl.addEventListener('click', (e) => {
+          const li = e.target.closest('li.todo');
+          if (!li) return;
+          const id = li.dataset.id;
+          const idx = findIndexById(id);
+          if (idx === -1) return;
+
+          // checkbox click
+          if (e.target.closest('.checkbox')) {
+            tasks[idx].completed = !tasks[idx].completed;
+            persist();
+            render();
+            return;
+          }
+
+          // star
+          if (e.target.closest('.icon-btn') && e.target.closest('.icon-btn').innerHTML.includes('★') || e.target.closest('.icon-btn') && e.target.closest('.icon-btn').innerHTML.includes('☆')) {
+            // determine if target was star: it's first icon-btn in actions
+            const btns = [...li.querySelectorAll('.icon-btn')];
+            if (btns.length && e.target === btns[0] || e.target.closest('.icon-btn') === btns[0]) {
+              tasks[idx].important = !tasks[idx].important;
+              persist(); render(); return;
+            }
+          }
+
+          // edit
+          if (e.target.closest('.icon-btn') && e.target.closest('.icon-btn').innerHTML.includes('✎')) {
+            openModal('edit', tasks[idx]);
+            return;
+          }
+
+          // delete
+          if (e.target.closest('.icon-btn') && e.target.closest('.icon-btn').innerHTML.includes('🗑')) {
+            if (confirm('Delete this task?')) {
+              tasks.splice(idx,1);
+              persist(); render();
+            }
+            return;
+          }
+        });
+
+        // filter buttons
+        filterBtns.forEach(btn => {
+          btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filter = btn.dataset.filter;
+            render();
+          });
+        });
+
+        // search
+        searchInput.addEventListener('input', (e) => {
+          searchTerm = e.target.value.trim();
+          render();
+        });
+
+        // clear completed
+        clearAllBtn.addEventListener('click', () => {
+          const confirmed = confirm('Clear all completed tasks?');
+          if (!confirmed) return;
+          tasks = tasks.filter(t => !t.completed);
+          persist(); render();
+        });
+      }
+
+      // open modal: mode = 'add' | 'edit', if edit provide task
+      function openModal(mode='add', task = null){
+        modalBackdrop.classList.add('active');
+        modalBackdrop.setAttribute('aria-hidden','false');
+        if (mode === 'add'){
+          modalTitle.textContent = 'Add Task';
+          modalSub.textContent = 'Create a new task to stay organized.';
+          taskTitleInput.value = '';
+          taskDescInput.value = '';
+          taskPriorityEl.value = 'normal';
+          taskDueEl.value = '';
+          editingId = null;
+        } else if (mode === 'edit' && task){
+          modalTitle.textContent = 'Edit Task';
+          modalSub.textContent = 'Update the task details.';
+          taskTitleInput.value = task.title;
+          taskDescInput.value = task.desc || '';
+          taskPriorityEl.value = task.priority || 'normal';
+          taskDueEl.value = task.due || '';
+          editingId = task.id;
+        }
+        // focus first input
+        setTimeout(() => taskTitleInput.focus(), 80);
+      }
+
+      function closeModal(){
+        modalBackdrop.classList.remove('active');
+        modalBackdrop.setAttribute('aria-hidden','true');
+        editingId = null;
+      }
+
+      function onSave(){
+        const title = taskTitleInput.value.trim();
+        if (!title){
+          alert('Please enter a title for the task.');
+          taskTitleInput.focus();
+          return;
+        }
+        const desc = taskDescInput.value || '';
+        const priority = taskPriorityEl.value || 'normal';
+        const due = taskDueEl.value || '';
+
+        if (editingId){
+          const idx = findIndexById(editingId);
+          if (idx !== -1){
+            tasks[idx].title = title;
+            tasks[idx].desc = desc;
+            tasks[idx].priority = priority;
+            tasks[idx].due = due;
+            // keep completed/important states
+          }
+        } else {
+          const t = createTask({title, desc, priority, due});
+          tasks.unshift(t); // newest at top
+        }
+        persist();
+        render();
+        closeModal();
+      }
+
+      // Start app
+      init();
+
+    })();
+  </script>
+</body>
+</html>
